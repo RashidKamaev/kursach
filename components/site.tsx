@@ -1,0 +1,17 @@
+"use client";
+import Link from "next/link";
+import { Menu, Search, Sparkles, UserRound, X } from "lucide-react";
+import { useState } from "react";
+import { AuthModal } from "./auth-modal";
+export function Header(){
+ const [menu,setMenu]=useState(false); const [auth,setAuth]=useState<"login"|"register"|null>(null);
+ return <><header className="sticky top-0 z-40 border-b border-black/5 bg-cream/90 backdrop-blur-xl"><div className="container flex h-20 items-center justify-between">
+  <Link href="/" className="flex items-center gap-2 text-xl font-black"><span className="grid size-9 place-items-center rounded-full bg-rose text-white"><Sparkles size={17}/></span>cosmetos</Link>
+  <nav className="hidden items-center gap-7 text-sm font-medium md:flex"><Link href="/masters">Мастера</Link><Link href="/salons">Салоны</Link><Link href="/categories">Услуги</Link><Link href="/promotions">Акции</Link><Link href="/articles">Журнал</Link></nav>
+  <div className="hidden gap-2 md:flex"><button className="btn-light" onClick={()=>setAuth("login")}><UserRound size={16}/>Войти</button><button className="btn-primary" onClick={()=>setAuth("register")}>Стать клиентом</button></div>
+  <button className="md:hidden" onClick={()=>setMenu(!menu)}>{menu?<X/>:<Menu/>}</button>
+ </div>{menu&&<div className="container grid gap-4 pb-6 md:hidden">{["masters|Мастера","salons|Салоны","categories|Услуги","promotions|Акции","articles|Журнал"].map(x=>{const [a,b]=x.split("|");return <Link key={a} href={"/"+a} onClick={()=>setMenu(false)}>{b}</Link>})}<button className="btn-primary" onClick={()=>setAuth("login")}>Войти</button></div>}</header><AuthModal mode={auth} onClose={()=>setAuth(null)} onSwitch={setAuth}/></>
+}
+export function Footer(){return <footer className="mt-24 bg-ink py-16 text-white/70"><div className="container grid gap-10 md:grid-cols-4"><div><div className="text-xl font-black text-white">cosmetos ✦</div><p className="mt-4 text-sm leading-6">Помогаем находить своих мастеров и заботиться о себе без лишней суеты.</p></div>
+{[["Сервис","О проекте|about","Как это работает|how-it-works","Тарифы|pricing","FAQ|faq"],["Партнёрам","Для мастеров|for-masters","Для салонов|for-salons","Поддержка|support"],["Документы","Контакты|contacts","Конфиденциальность|privacy","Соглашение|terms"]].map(([h,...items])=><div key={h}><b className="text-white">{h}</b><div className="mt-4 grid gap-3 text-sm">{items.map(i=>{const [n,u]=i.split("|");return <Link key={u} href={"/"+u}>{n}</Link>})}</div></div>)}</div><div className="container mt-12 border-t border-white/10 pt-6 text-xs">© 2026 Cosmetos. Курсовой full-stack проект.</div></footer>}
+export function SearchBar(){return <form action="/masters" className="card mt-8 grid gap-3 p-3 md:grid-cols-[1fr_1fr_1fr_auto]"><label className="px-3 py-2 text-xs text-black/50">Город<input name="city" className="mt-1 block w-full bg-transparent text-sm font-semibold text-ink outline-none" placeholder="Москва"/></label><label className="border-black/10 px-3 py-2 text-xs text-black/50 md:border-l">Услуга<input name="service" className="mt-1 block w-full bg-transparent text-sm font-semibold text-ink outline-none" placeholder="Маникюр"/></label><label className="border-black/10 px-3 py-2 text-xs text-black/50 md:border-l">Когда<input name="date" type="date" className="mt-1 block w-full bg-transparent text-sm font-semibold text-ink outline-none"/></label><button className="btn-primary"><Search size={18}/>Найти</button></form>}

@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  MASTER
+  SALON_OWNER
+  ADMIN
+}
+enum ModerationStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  FINISHED
+}
+enum EventType {
+  IMPRESSION
+  CLICK
+}
+enum NotificationType {
+  BOOKING
+  REVIEW
+  SYSTEM
+  PROMOTION
+}
+enum WeekDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  passwordHash String
+  role Role @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profile Profile?
+  master Master?
+  ownedSalons Salon[]
+  clientBookings Booking[] @relation("ClientBookings")
+  reviews Review[]
+  notifications Notification[]
+}
+model Profile {
+  id String @id @default(cuid())
+  userId String @unique
+  firstName String
+  lastName String?
+  phone String?
+  city String?
+  avatarUrl String?
+  bio String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Master {
+  id String @id @default(cuid())
+  userId String @unique
+  city String
+  address String?
+  experience Int @default(0)
+  rating Float @default(0)
+  reviewCount Int @default(0)
+  status ModerationStatus @default(DRAFT)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services MasterService[]
+  schedules Schedule[]
+  bookings Booking[]
+  reviews Review[]
+  certificates Certificate[]
+  portfolio PortfolioItem[]
+  campaigns AdCampaign[]
+  salonLinks SalonEmployee[]
+  moderation ModerationRequest[]
+}
+model Salon {
+  id String @id @default(cuid())
+  ownerId String
+  name String
+  slug String @unique
+  city String
+  address String
+  description String?
+  phone String?
+  rating Float @default(0)
+  reviewCount Int @default(0)
+  status ModerationStatus @default(DRAFT)
+  owner User @relation(fields: [ownerId], references: [id])
+  employees SalonEmployee[]
+  services SalonService[]
+  schedules Schedule[]
+  bookings Booking[]
+  reviews Review[]
+  portfolio PortfolioItem[]
+  campaigns AdCampaign[]
+  promocodes Promocode[]
+  moderation ModerationRequest[]
+}
+model SalonEmployee {
+  id String @id @default(cuid())
+  salonId String
+  masterId String
+  position String
+  isActive Boolean @default(true)
+  salon Salon @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  master Master @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  @@unique([salonId, masterId])
+}
+model Category {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  icon String?
+  description String?
+  services Service[]
+}
+model Service {
+  id String @id @default(cuid())
+  categoryId String
+  name String
+  slug String @unique
+  description String?
+  durationMin Int @default(60)
+  category Category @relation(fields: [categoryId], references: [id])
+  masters MasterService[]
+  salons SalonService[]
+}
+model MasterService {
+  id String @id @default(cuid())
+  masterId String
+  serviceId String
+  price Decimal @db.Decimal(10,2)
+  durationMin Int
+  isActive Boolean @default(true)
+  master Master @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
+  bookings Booking[]
+  @@unique([masterId, serviceId])
+}
+model SalonService {
+  id String @id @default(cuid())
+  salonId String
+  serviceId String
+  price Decimal @db.Decimal(10,2)
+  durationMin Int
+  isActive Boolean @default(true)
+  salon Salon @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
+  bookings Booking[]
+  @@unique([salonId, serviceId])
+}
+model Schedule {
+  id String @id @default(cuid())
+  masterId String?
+  salonId String?
+  weekday WeekDay
+  startTime String
+  endTime String
+  isWorking Boolean @default(true)
+  master Master? @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  salon Salon? @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  slots TimeSlot[]
+}
+model TimeSlot {
+  id String @id @default(cuid())
+  scheduleId String
+  startsAt DateTime
+  endsAt DateTime
+  isAvailable Boolean @default(true)
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  booking Booking?
+}
+model Booking {
+  id String @id @default(cuid())
+  clientId String
+  masterId String?
+  salonId String?
+  masterServiceId String?
+  salonServiceId String?
+  timeSlotId String? @unique
+  startsAt DateTime
+  endsAt DateTime
+  price Decimal @db.Decimal(10,2)
+  status BookingStatus @default(PENDING)
+  comment String?
+  createdAt DateTime @default(now())
+  client User @relation("ClientBookings", fields: [clientId], references: [id])
+  master Master? @relation(fields: [masterId], references: [id])
+  salon Salon? @relation(fields: [salonId], references: [id])
+  masterService MasterService? @relation(fields: [masterServiceId], references: [id])
+  salonService SalonService? @relation(fields: [salonServiceId], references: [id])
+  timeSlot TimeSlot? @relation(fields: [timeSlotId], references: [id])
+  review Review?
+}
+model Review {
+  id String @id @default(cuid())
+  bookingId String @unique
+  authorId String
+  masterId String?
+  salonId String?
+  rating Int
+  text String
+  isPublished Boolean @default(true)
+  createdAt DateTime @default(now())
+  booking Booking @relation(fields: [bookingId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+  master Master? @relation(fields: [masterId], references: [id])
+  salon Salon? @relation(fields: [salonId], references: [id])
+}
+model Certificate {
+  id String @id @default(cuid())
+  masterId String
+  title String
+  issuer String?
+  imageUrl String?
+  issuedAt DateTime?
+  master Master @relation(fields: [masterId], references: [id], onDelete: Cascade)
+}
+model PortfolioItem {
+  id String @id @default(cuid())
+  masterId String?
+  salonId String?
+  title String
+  imageUrl String
+  createdAt DateTime @default(now())
+  master Master? @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  salon Salon? @relation(fields: [salonId], references: [id], onDelete: Cascade)
+}
+model AdCampaign {
+  id String @id @default(cuid())
+  masterId String?
+  salonId String?
+  title String
+  budget Decimal @db.Decimal(10,2)
+  status CampaignStatus @default(DRAFT)
+  startsAt DateTime
+  endsAt DateTime
+  master Master? @relation(fields: [masterId], references: [id])
+  salon Salon? @relation(fields: [salonId], references: [id])
+  events AdEvent[]
+}
+model AdEvent {
+  id String @id @default(cuid())
+  campaignId String
+  type EventType
+  createdAt DateTime @default(now())
+  campaign AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+model Promocode {
+  id String @id @default(cuid())
+  salonId String
+  code String @unique
+  discountPercent Int
+  expiresAt DateTime
+  usageLimit Int?
+  salon Salon @relation(fields: [salonId], references: [id], onDelete: Cascade)
+}
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  type NotificationType
+  title String
+  message String
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model ModerationRequest {
+  id String @id @default(cuid())
+  masterId String?
+  salonId String?
+  status ModerationStatus @default(PENDING)
+  comment String?
+  createdAt DateTime @default(now())
+  resolvedAt DateTime?
+  master Master? @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  salon Salon? @relation(fields: [salonId], references: [id], onDelete: Cascade)
+}

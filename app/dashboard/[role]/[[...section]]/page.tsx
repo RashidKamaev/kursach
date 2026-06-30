@@ -1,0 +1,3 @@
+import { notFound, redirect } from "next/navigation"; import { DashboardShell } from "@/components/dashboard"; import { getCurrentUser } from "@/lib/auth";
+const map:Record<string,string>={CLIENT:"client",MASTER:"master",SALON_OWNER:"salon",ADMIN:"admin"};
+export default async function Dashboard({params}:{params:Promise<{role:string;section?:string[]}>}){const {role,section}=await params;if(!["client","master","salon","admin"].includes(role))notFound();const user=await getCurrentUser();if(!user)redirect("/?auth=login");if(map[user.role]!==role)redirect(`/dashboard/${map[user.role]}`);return <DashboardShell role={role} section={section?.[0]||""} name={user.profile?.firstName||user.email}/>}
