@@ -18,7 +18,7 @@
 
 - Node.js 20+
 - npm 10+
-- PostgreSQL 15+ (локально, в Docker или Neon)
+- PostgreSQL 15+ (локально, в Docker или Timeweb Cloud)
 
 ## Быстрый запуск
 
@@ -63,23 +63,24 @@ npm run db:seed
 | Владелец салона | `salon@cosmetos.ru` |
 | Администратор | `admin@cosmetos.ru` |
 
-## Neon PostgreSQL
+## Timeweb Cloud PostgreSQL (сервер в России)
 
-1. Создайте проект на [Neon](https://neon.tech).
-2. Скопируйте pooled connection string из панели проекта.
-3. Укажите её как `DATABASE_URL` в `.env` и в настройках Vercel.
-4. Выполните `npm run db:push` и `npm run db:seed` локально с этой строкой подключения.
-
-Для Prisma строка обычно выглядит так:
+1. В панели [Timeweb Cloud](https://timeweb.cloud/services/postgresql) создайте облачную PostgreSQL-базу и выберите российский дата-центр.
+2. На вкладке **Подключение** разрешите внешние подключения и скопируйте хост, порт, имя базы, пользователя и пароль.
+3. Соберите строку и сохраните её как `DATABASE_URL` локально и в Vercel:
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST/neondb?sslmode=require"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=public&sslmode=require&connection_limit=5"
 ```
+
+4. Выполните `npm run db:push` и `npm run db:seed`.
+
+Timeweb работает без VPN из России, а Vercel подключается к нему как к внешней PostgreSQL-базе. Не ограничивайте доступ только домашним IP: serverless-функции Vercel могут иметь динамические исходящие адреса. Обязательно используйте сложный пароль и SSL.
 
 ## Деплой на Vercel
 
 1. Загрузите репозиторий на GitHub и импортируйте его в Vercel.
-2. Добавьте `DATABASE_URL` и `JWT_SECRET` в **Project Settings → Environment Variables**.
+2. Добавьте строку Timeweb `DATABASE_URL` и `JWT_SECRET` в **Project Settings → Environment Variables** для Production, Preview и Development.
 3. Build command уже задан через `npm run build` и включает `prisma generate`.
 4. После первой публикации примените схему к production-БД командой `npx prisma db push`.
 

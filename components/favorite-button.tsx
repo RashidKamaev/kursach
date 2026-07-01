@@ -1,0 +1,5 @@
+"use client";
+import { Heart } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+export function FavoriteButton({entityType,entityId,title,imageUrl,href}:{entityType:string;entityId:string;title:string;imageUrl:string;href:string}){const [active,setActive]=useState(false);async function toggle(){const r=await fetch("/api/favorites",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({entityType,entityId,title,subtitle:"Сохранено в избранном",imageUrl,href})});const x=await r.json();if(r.status===401)return toast.error(x.error);setActive(x.favorite);toast.success(x.favorite?"Добавлено в избранное":"Удалено из избранного")}return <button onClick={toggle} className={active?"btn bg-rose text-white":"btn-light"}><Heart fill={active?"currentColor":"none"}/>{active?"В избранном":"В избранное"}</button>}

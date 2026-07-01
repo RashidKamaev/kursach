@@ -65,6 +65,7 @@ model User {
   clientBookings Booking[] @relation("ClientBookings")
   reviews Review[]
   notifications Notification[]
+  favorites Favorite[]
 }
 model Profile {
   id String @id @default(cuid())
@@ -288,6 +289,20 @@ model Notification {
   isRead Boolean @default(false)
   createdAt DateTime @default(now())
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Favorite {
+  id String @id @default(cuid())
+  userId String
+  entityType String
+  entityId String
+  title String
+  subtitle String?
+  imageUrl String?
+  href String
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, entityType, entityId])
+  @@index([userId])
 }
 model ModerationRequest {
   id String @id @default(cuid())
